@@ -4,11 +4,7 @@
 enum FeatureFlag: Int, CaseIterable {
     case jetpackDisconnect
     case debugMenu
-<<<<<<< HEAD
     case offlinePages
-    case postReblogging
-=======
->>>>>>> develop
     case unifiedAuth
     case unifiedSiteAddress
     case unifiedGoogle
@@ -75,13 +71,8 @@ extension FeatureFlag: OverrideableFlag {
             return "Jetpack disconnect"
         case .debugMenu:
             return "Debug menu"
-<<<<<<< HEAD
         case .offlinePages:
             return "Offline Pages"
-        case .postReblogging:
-            return "Post Reblogging"
-=======
->>>>>>> develop
         case .unifiedAuth:
             return "Unified Auth"
         case .unifiedSiteAddress:
