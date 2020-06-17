@@ -85,7 +85,8 @@ open class ReaderDetailViewController: UIViewController, UIViewControllerRestora
     @IBOutlet fileprivate var bylineGradientViews: [GradientView]!
     @IBOutlet fileprivate weak var avatarImageView: CircularImageView!
     @IBOutlet fileprivate weak var bylineLabel: UILabel!
-    @IBOutlet fileprivate weak var attributionView: ReaderCardDiscoverAttributionView!
+    @IBOutlet fileprivate weak var attributionViewContainer: UIView!
+    private let attributionView: ReaderCardDiscoverAttributionView = .loadFromNib()
     private let textView: WPRichContentView = {
         let textView = WPRichContentView(frame: .zero, textContainer: nil)
         textView.translatesAutoresizingMaskIntoConstraints = false
@@ -557,13 +558,6 @@ open class ReaderDetailViewController: UIViewController, UIViewControllerRestora
         WPStyleGuide.applyReaderCardTagButtonStyle(tagButton)
         WPStyleGuide.applyReaderCardActionButtonStyle(commentButton)
         WPStyleGuide.applyReaderCardActionButtonStyle(likeButton)
-        if !FeatureFlag.postReblogging.enabled {
-            // this becomes redundant, as saveForLaterButton does not have a label anymore
-            // and applyReaderActionButtonStyle() is called by applyReaderSaveForLaterButtonStyle
-            // which in turn is called by configureSaveForLaterButton. Same considerations for
-            // reblog button
-            WPStyleGuide.applyReaderCardActionButtonStyle(saveForLaterButton)
-        }
 
         view.backgroundColor = .listBackground
 
@@ -864,6 +858,11 @@ open class ReaderDetailViewController: UIViewController, UIViewControllerRestora
     }
 
     fileprivate func configureDiscoverAttribution() {
+        attributionView.displayAsLink = true
+        attributionViewContainer.addSubview(attributionView)
+        attributionViewContainer.pinSubviewToAllEdges(attributionView)
+        attributionView.translatesAutoresizingMaskIntoConstraints = false
+
         if post?.sourceAttributionStyle() == SourceAttributionStyle.none {
             attributionView.isHidden = true
         } else {
@@ -952,9 +951,7 @@ open class ReaderDetailViewController: UIViewController, UIViewControllerRestora
         likeButton.isEnabled = ReaderHelpers.isLoggedIn()
         // as by design spec, only display like counts
         let likeCount = post?.likeCount()?.intValue ?? 0
-        let shortTitle = likeCount > 0 ? "\(likeCount)" : ""
-
-        let title = FeatureFlag.postReblogging.enabled ? shortTitle : post?.likeCountForDisplay()
+        let title = likeCount > 0 ? "\(likeCount)" : ""
 
         let selected = post?.isLiked ?? false
         let likeImage = UIImage(named: "icon-reader-like")
@@ -969,9 +966,6 @@ open class ReaderDetailViewController: UIViewController, UIViewControllerRestora
 
     /// Uses the configuration in WPStyleGuide for the reblog button
     fileprivate func configureReblogButton() {
-        guard FeatureFlag.postReblogging.enabled else {
-            return
-        }
         reblogButton.isHidden = false
         WPStyleGuide.applyReaderReblogActionButtonStyle(reblogButton, showTitle: false)
     }
@@ -1052,12 +1046,7 @@ open class ReaderDetailViewController: UIViewController, UIViewControllerRestora
 
     fileprivate func configureSaveForLaterButton() {
         WPStyleGuide.applyReaderSaveForLaterButtonStyle(saveForLaterButton)
-        if FeatureFlag.postReblogging.enabled {
-            WPStyleGuide.applyReaderSaveForLaterButtonTitles(saveForLaterButton, showTitle: false)
-        } else {
-            WPStyleGuide.applyReaderSaveForLaterButtonTitles(saveForLaterButton)
-        }
-
+        WPStyleGuide.applyReaderSaveForLaterButtonTitles(saveForLaterButton, showTitle: false)
 
         saveForLaterButton.isHidden = false
         saveForLaterButton.isSelected = post?.isSavedForLater ?? false
@@ -1563,9 +1552,7 @@ extension ReaderDetailViewController: Accessible {
         prepareHeaderForVoiceOver()
         prepareContentForVoiceOver()
         prepareActionButtonsForVoiceOver()
-        if FeatureFlag.postReblogging.enabled {
-            prepareReblogForVoiceOver()
-        }
+        prepareReblogForVoiceOver()
 
         NotificationCenter.default.addObserver(self,
             selector: #selector(setBarsAsVisibleIfVoiceOverIsEnabled),

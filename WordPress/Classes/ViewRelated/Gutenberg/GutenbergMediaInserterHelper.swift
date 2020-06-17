@@ -29,7 +29,7 @@ class GutenbergMediaInserterHelper: NSObject {
 
     func insertFromSiteMediaLibrary(media: [Media], callback: @escaping MediaPickerDidPickMediaCallback) {
         let formattedMedia = media.map { item in
-            return MediaInfo(id: item.mediaID?.int32Value, url: item.remoteURL, type: item.mediaTypeString)
+            return MediaInfo(id: item.mediaID?.int32Value, url: item.remoteURL, type: item.mediaTypeString, caption: item.caption)
         }
         callback(formattedMedia)
     }
@@ -97,8 +97,8 @@ class GutenbergMediaInserterHelper: NSObject {
         callback([MediaInfo(id: mediaUploadID, url: url.absoluteString, type: media.mediaTypeString)])
     }
 
-    func insertFromImage(image: UIImage, callback: @escaping MediaPickerDidPickMediaCallback) {
-        guard let media = insert(exportableAsset: image, source: .mediaEditor) else {
+    func insertFromImage(image: UIImage, callback: @escaping MediaPickerDidPickMediaCallback, source: MediaSource = .deviceLibrary) {
+        guard let media = insert(exportableAsset: image, source: source) else {
             callback([])
             return
         }
@@ -240,6 +240,10 @@ class GutenbergMediaInserterHelper: NSObject {
         case .processing:
             gutenberg.mediaUploadUpdate(id: mediaUploadID, state: .uploading, progress: 0, url: nil, serverID: nil)
         case .thumbnailReady(let url):
+            guard ReachabilityUtils.isInternetReachable() else {
+                gutenberg.mediaUploadUpdate(id: mediaUploadID, state: .failed, progress: 0, url: url, serverID: nil)
+                return
+            }
             gutenberg.mediaUploadUpdate(id: mediaUploadID, state: .uploading, progress: 0.20, url: url, serverID: nil)
             break
         case .uploading:

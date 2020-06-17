@@ -1,15 +1,9 @@
-Nya block! Låt oss presentera blocket för de senaste inläggen, som låter dig lyfta fram dina nyheter bland inlägg och sidor.
+Som vanligt har vi gjort många förbättringar i blockredigeraren. Knappen för att ta bort block ligger nu i en meny som du når genom att trycka på knappen med tre punkter i blockets verktygsfält. Vi har också lagt till stöd för överläggsfärger i omslagsblocket, stöd för radiella gradienter i blocken för knappar och omslag, animering in/ut av det flytande verktygsfältet och en inforuta för knapparna vid val av sidmall. Blockets verktygsfält minieras om blocket är smalare än verktygsfältet.
 
-När du skapar en ny sida visar vi några mallar. När du väljer någon av dem lägger vi in de block som behövs på sidan för att du ska komma igång snabbt.
+Vi har rättat mycket för att skapa en renare upplevelse i blockredigeraren.
+Om förbindelse saknas visar uppladning av media meddelandet ”Försök igen” (i stället för att fastna), ångra/gör om fungerar mer tillförlitligt för både block och text, vi har rättat ett problem vid sammanslagning av textblock och knapparnas justering i sidmallar.
 
-Vi har löst några problem med blockredigeraren: inga fler programkrascher när du klistrar in HTML-innehåll. Och citatblockets kanter försvinner inte längre, ens om du använder mörkt läge.
+En ny inställning låter dig välja startsida och inläggssida under webbplatsinställningarna.
 
-Om du schemalade ett inlägg för publicering i förfluten tid visades det tidigare som ”schemalagt” i stället för ”publicerat”. Det är nu rättat, liksom ett annat problem där datum kunde visas på fel sätt om din webbplats och din telefon var inställda på olika tidszoner.
+Slutligen har vi tagit hand om ett problem med Gravatar där man kunde fastna i fotoredigeringen när man försökte ta en ny bild samt gjort några uppdateringar i läsaren.
 
-Vi har rättat några inkonsekventa saker i användargränssnittet i mörkt läge och med verktygslisten i läsaren.
-
-När du skriver kommentarer i helskärmsläge kan du @-nämna personer.
-
-Ibland händer det att e-post med länkar för registrering och magisk inloggning hamnar i skräpfoldern, så på bekräftelsesidan har vi lagt till en påminnelse om att kolla i mapparna för spam och reklam om de inte hittar meddelandet direkt.
-
-Ta hand om er.

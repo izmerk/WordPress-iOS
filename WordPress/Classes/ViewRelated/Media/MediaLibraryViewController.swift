@@ -595,6 +595,15 @@ extension MediaLibraryViewController: WPMediaPickerViewControllerDelegate {
 
         updateViewState(for: pickerDataSource.numberOfAssets())
     }
+
+    func mediaPickerController(_ picker: WPMediaPickerViewController, handleError error: Error) -> Bool {
+        let nserror = error as NSError
+        if let mediaLibrary = self.blog.media, !mediaLibrary.isEmpty {
+            let title = NSLocalizedString("Unable to Sync", comment: "Title of error prompt shown when a sync the user initiated fails.")
+            WPError.showNetworkingNotice(title: title, error: nserror)
+        }
+        return true
+    }
 }
 
 // MARK: - State restoration
@@ -655,19 +664,19 @@ extension MediaLibraryViewController: StockPhotosPickerDelegate {
     }
 }
 
-// MARK: Giphy Picker Delegate
+// MARK: Tenor Picker Delegate
 
-extension MediaLibraryViewController: GiphyPickerDelegate {
-    func giphyPicker(_ picker: GiphyPicker, didFinishPicking assets: [GiphyMedia]) {
+extension MediaLibraryViewController: TenorPickerDelegate {
+    func tenorPicker(_ picker: TenorPicker, didFinishPicking assets: [TenorMedia]) {
         guard assets.count > 0 else {
             return
         }
 
         let mediaCoordinator = MediaCoordinator.shared
-        assets.forEach { giphyMedia in
-            let info = MediaAnalyticsInfo(origin: .mediaLibrary(.giphy), selectionMethod: .fullScreenPicker)
-            mediaCoordinator.addMedia(from: giphyMedia, to: blog, analyticsInfo: info)
-            WPAnalytics.track(.giphyUploaded)
+        assets.forEach { tenorMedia in
+            let info = MediaAnalyticsInfo(origin: .mediaLibrary(.tenor), selectionMethod: .fullScreenPicker)
+            mediaCoordinator.addMedia(from: tenorMedia, to: blog, analyticsInfo: info)
+            WPAnalytics.track(.tenorUploaded)
         }
     }
 }

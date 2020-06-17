@@ -648,9 +648,17 @@ FeaturedImageViewControllerDelegate>
             
             cell.detailTextLabel.text = [self.postDateFormatter stringFromDate:self.apost.dateCreated];
         } else {
-            cell.textLabel.text = NSLocalizedString(@"Publish", @"Label for the publish (verb) button. Tapping publishes a draft post.");
+            cell.textLabel.text = NSLocalizedString(@"Publish Date", @"Label for the publish date button.");
             cell.detailTextLabel.text = NSLocalizedString(@"Immediately", @"");
         }
+
+        if ([self.apost.status isEqualToString:PostStatusPrivate]) {
+            [cell disable];
+        } else {
+            [cell enable];
+            cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+        }
+
         cell.tag = PostSettingsRowPublishDate;
     } else if (indexPath.row == 1) {
         // Publish Status
@@ -671,7 +679,7 @@ FeaturedImageViewControllerDelegate>
         // Visibility
         cell = [self getWPTableViewDisclosureCell];
         cell.textLabel.text = NSLocalizedString(@"Visibility", @"The visibility settings of the post. Should be the same as in core WP.");
-        cell.detailTextLabel.text = [self titleForVisibility];
+        cell.detailTextLabel.text = [self.apost titleForVisibility];
         cell.tag = PostSettingsRowVisibility;
         cell.accessibilityIdentifier = @"Visibility";
 
@@ -767,6 +775,7 @@ FeaturedImageViewControllerDelegate>
     cell.name = NSLocalizedString(@"Stick post to the front page", @"This is the cell title.");
     cell.on = self.post.isStickyPost;
     cell.onChange = ^(BOOL newValue) {
+        [WPAnalytics trackEvent:WPAnalyticsEventEditorPostStickyChanged properties:@{@"via": @"settings"}];
         weakSelf.post.isStickyPost = newValue;
     };
     return cell;
@@ -1025,6 +1034,7 @@ FeaturedImageViewControllerDelegate>
     SettingsSelectionViewController *vc = [[SettingsSelectionViewController alloc] initWithDictionary:statusDict];
     __weak SettingsSelectionViewController *weakVc = vc;
     vc.onItemSelected = ^(NSString *status) {
+        [WPAnalytics trackEvent:WPAnalyticsEventEditorPostStatusChanged properties:@{@"via": @"settings"}];
         self.apost.status = status;
         [weakVc dismiss];
         [self.tableView reloadData];
@@ -1034,59 +1044,11 @@ FeaturedImageViewControllerDelegate>
 
 - (void)showPostVisibilitySelector
 {
-    NSArray *titles = @[
-                        NSLocalizedString(@"Public", @"Privacy setting for posts set to 'Public' (default). Should be the same as in core WP."),
-                        NSLocalizedString(@"Password protected", @"Privacy setting for posts set to 'Password protected'. Should be the same as in core WP."),
-                        NSLocalizedString(@"Private", @"Privacy setting for posts set to 'Private'. Should be the same as in core WP.")
-                        ];
-    NSDictionary *visiblityDict = @{
-                                    @"DefaultValue": NSLocalizedString(@"Public", @"Privacy setting for posts set to 'Public' (default). Should be the same as in core WP."),
-                                    @"Title" : NSLocalizedString(@"Visibility", nil),
-                                    @"Titles" : titles,
-                                    @"Values" : titles,
-                                    @"CurrentValue" : [self titleForVisibility]};
-    SettingsSelectionViewController *vc = [[SettingsSelectionViewController alloc] initWithDictionary:visiblityDict];
-    __weak SettingsSelectionViewController *weakVc = vc;
-    vc.onItemSelected = ^(NSString *visibility) {
+    PostVisibilitySelectorViewController *vc = [[PostVisibilitySelectorViewController alloc] init:self.apost];
+    __weak PostVisibilitySelectorViewController *weakVc = vc;
+    vc.completion = ^(NSString *visibility) {
+        [WPAnalytics trackEvent:WPAnalyticsEventEditorPostVisibilityChanged properties:@{@"via": @"settings"}];
         [weakVc dismiss];
-        
-        NSAssert(self.apost != nil, @"The post should not be nil here.");
-        NSAssert(!self.apost.isFault, @"The post should not be a fault here here.");
-        NSAssert(self.apost.managedObjectContext != nil, @"The post's MOC should not be nil here.");
-
-        if ([visibility isEqualToString:NSLocalizedString(@"Private", @"Post privacy status in the Post Editor/Settings area (compare with WP core translations).")]) {
-            self.apost.status = PostStatusPrivate;
-            self.apost.password = nil;
-        } else {
-            if ([self.apost.status isEqualToString:PostStatusPrivate]) {
-                if ([self.apost.original.status isEqualToString:PostStatusPrivate]) {
-                    self.apost.status = PostStatusPublish;
-                } else {
-                    // restore the original status
-                    self.apost.status = self.apost.original.status;
-                }
-            }
-            if ([visibility isEqualToString:NSLocalizedString(@"Password protected", @"Post password protection in the Post Editor/Settings area (compare with WP core translations).")]) {
-                
-                NSString *password = @"";
-                
-                NSAssert(self.apost.original != nil,
-                         @"We're expecting to have a reference to the original post here.");
-                NSAssert(!self.apost.original.isFault,
-                         @"The original post should not be a fault here here.");
-                NSAssert(self.apost.original.managedObjectContext != nil,
-                         @"The original post's MOC should not be nil here.");
-                
-                if (self.apost.original.password) {
-                    // restore the original password
-                    password = self.apost.original.password;
-                }
-                self.apost.password = password;
-            } else {
-                self.apost.password = nil;
-            }
-        }
-
         [self.tableView reloadData];
     };
     [self.navigationController pushViewController:vc animated:YES];
@@ -1122,6 +1084,7 @@ FeaturedImageViewControllerDelegate>
     vc.onItemSelected = ^(NSString *status) {
         // Check if the object passed is indeed an NSString, otherwise we don't want to try to set it as the post format
         if ([status isKindOfClass:[NSString class]]) {
+            [WPAnalytics trackEvent:WPAnalyticsEventEditorPostFormatChanged properties:@{@"via": @"settings"}];
             post.postFormatText = status;
             [weakVc dismiss];
             [self.tableView reloadData];
@@ -1244,6 +1207,7 @@ FeaturedImageViewControllerDelegate>
     vc.title = NSLocalizedString(@"Slug", @"Label for the slug field. Should be the same as WP core.");
     vc.autocapitalizationType = UITextAutocapitalizationTypeNone;
     vc.onValueChanged = ^(NSString *value) {
+        [WPAnalytics trackEvent:WPAnalyticsEventEditorPostSlugChanged properties:@{@"via": @"settings"}];
         self.apost.wp_slug = value;
         [self.tableView reloadData];
     };
@@ -1258,6 +1222,10 @@ FeaturedImageViewControllerDelegate>
                                                                                      isPassword:NO];
     vc.title = NSLocalizedString(@"Excerpt", @"Label for the excerpt field. Should be the same as WP core.");
     vc.onValueChanged = ^(NSString *value) {
+        if (self.apost.mt_excerpt != value) {
+            [WPAnalytics trackEvent:WPAnalyticsEventEditorPostExcerptChanged properties:@{@"via": @"settings"}];
+        }
+
         self.apost.mt_excerpt = value;
         [self.tableView reloadData];
     };
@@ -1303,9 +1271,7 @@ FeaturedImageViewControllerDelegate>
     PostTagPickerViewController *tagsPicker = [[PostTagPickerViewController alloc] initWithTags:self.post.tags blog:self.post.blog];
 
     tagsPicker.onValueChanged = ^(NSString * _Nonnull value) {
-        if (!value.isEmpty) {
-            [WPAnalytics track:WPAnalyticsStatPostSettingsTagsAdded];
-        }
+        [WPAnalytics trackEvent:WPAnalyticsEventEditorPostTagsChanged properties:@{@"via": @"settings"}];
 
         self.post.tags = value;
     };
@@ -1328,17 +1294,6 @@ FeaturedImageViewControllerDelegate>
     DDLogError(@"Error loading featured image: %@", error);
     UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
     cell.textLabel.text = NSLocalizedString(@"Featured Image did not load", @"");
-}
-
-- (NSString *)titleForVisibility
-{
-    if (self.apost.password) {
-        return NSLocalizedString(@"Password protected", @"Privacy setting for posts set to 'Password protected'. Should be the same as in core WP.");
-    } else if ([self.apost.status isEqualToString:PostStatusPrivate]) {
-        return NSLocalizedString(@"Private", @"Privacy setting for posts set to 'Private'. Should be the same as in core WP.");
-    }
-
-    return NSLocalizedString(@"Public", @"Privacy setting for posts set to 'Public' (default). Should be the same as in core WP.");
 }
 
 - (NoResultsViewController *)noResultsView
@@ -1433,6 +1388,8 @@ FeaturedImageViewControllerDelegate>
     [self unregisterChangeObserver];
     [self.mediaDataSource searchCancelled];
 
+    [WPAnalytics trackEvent:WPAnalyticsEventEditorPostFeaturedImageChanged properties:@{@"via": @"settings", @"action": @"added"}];
+
     if ([[assets firstObject] isKindOfClass:[PHAsset class]]){
         PHAsset *asset = [assets firstObject];
         self.isUploadingMedia = YES;
@@ -1460,6 +1417,8 @@ FeaturedImageViewControllerDelegate>
 
 - (void)postCategoriesViewController:(PostCategoriesViewController *)controller didUpdateSelectedCategories:(NSSet *)categories
 {
+    [WPAnalytics trackEvent:WPAnalyticsEventEditorPostCategoryChanged properties:@{@"via": @"settings"}];
+
     // Save changes.
     self.post.categories = [categories mutableCopy];
     [self.post save];
@@ -1494,8 +1453,7 @@ FeaturedImageViewControllerDelegate>
 
 - (void)updateFeaturedImageCell:(PostFeaturedImageCell *)cell
 {
-    self.featuredImage = cell.image;
-    cell.accessibilityIdentifier = @"Current Featured Image";
+    self.featuredImage = cell.image;    
     NSInteger featuredImageSection = [self.sections indexOfObject:@(PostSettingsSectionFeaturedImage)];
     NSIndexSet *featuredImageSectionSet = [NSIndexSet indexSetWithIndex:featuredImageSection];
     [self.tableView reloadSections:featuredImageSectionSet withRowAnimation:UITableViewRowAnimationNone];
@@ -1505,10 +1463,12 @@ FeaturedImageViewControllerDelegate>
 
 - (void)FeaturedImageViewControllerOnRemoveImageButtonPressed:(FeaturedImageViewController *)controller
 {
+    [WPAnalytics trackEvent:WPAnalyticsEventEditorPostFeaturedImageChanged properties:@{@"via": @"settings", @"action": @"removed"}];
     self.featuredImage = nil;
     self.animatedFeaturedImageData = nil;
     [self.apost setFeaturedImage:nil];
     [self dismissViewControllerAnimated:YES completion:nil];
+    [self.tableView reloadData];
 }
 
 @end

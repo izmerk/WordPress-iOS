@@ -10,7 +10,6 @@
 #import "ApiCredentials.h"
 
 #import "Blog.h"
-#import "BlogDetailHeaderView.h"
 #import "BlogService.h"
 #import "BlogSyncFacade.h"
 #import "BlogSelectorViewController.h"
@@ -24,7 +23,6 @@
 #import "Confirmable.h"
 #import "Constants.h"
 #import "ContextManager.h"
-#import "ContextManager-Internals.h"
 #import "Coordinate.h"
 #import "CustomHighlightButton.h"
 
@@ -116,7 +114,6 @@
 
 // Pods
 #import <SVProgressHUD/SVProgressHUD.h>
-#import <FormatterKit/FormatterKit-umbrella.h>
 
 #import <WPMediaPicker/WPMediaPicker.h>
 
@@ -126,3 +123,4 @@
 #import <WordPressShared/WPTableViewCell.h>
 #import <WordPressShared/WPAnalytics.h>
 #import <WordPressUI/UIImage+Util.h>
+#import <React/RCTAnimatedImage.h>

@@ -4,13 +4,21 @@
 enum FeatureFlag: Int, CaseIterable {
     case jetpackDisconnect
     case debugMenu
+<<<<<<< HEAD
     case offlinePages
     case postReblogging
+=======
+>>>>>>> develop
     case unifiedAuth
-    case quickActions
+    case unifiedSiteAddress
+    case unifiedGoogle
     case meMove
     case floatingCreateButton
     case newReaderNavigation
+    case tenor
+    case readerWebview
+    case swiftCoreData
+    case homepageSettings
 
     /// Returns a boolean indicating if the feature is enabled
     var enabled: Bool {
@@ -22,22 +30,29 @@ enum FeatureFlag: Int, CaseIterable {
         case .jetpackDisconnect:
             return BuildConfiguration.current == .localDeveloper
         case .debugMenu:
-            return BuildConfiguration.current ~= [.localDeveloper,
-                                                  .a8cBranchTest]
+            return BuildConfiguration.current ~= [.localDeveloper, .a8cBranchTest]
         case .offlinePages:
             return BuildConfiguration.current == .localDeveloper
-        case .postReblogging:
-            return true
         case .unifiedAuth:
-            return BuildConfiguration.current == .localDeveloper
-        case .quickActions:
-            return true
-        case .meMove:
-            return BuildConfiguration.current ~= [.localDeveloper, .a8cBranchTest, .a8cPrereleaseTesting]
-        case .floatingCreateButton:
-            return BuildConfiguration.current ~= [.localDeveloper, .a8cBranchTest, .a8cPrereleaseTesting]
-        case .newReaderNavigation:
+            return BuildConfiguration.current ~= [.localDeveloper, .a8cBranchTest]
+        case .unifiedSiteAddress:
             return false
+        case .unifiedGoogle:
+            return BuildConfiguration.current ~= [.localDeveloper, .a8cBranchTest]
+        case .meMove:
+            return true
+        case .floatingCreateButton:
+            return true
+        case .newReaderNavigation:
+            return true
+        case .tenor:
+            return true
+        case .readerWebview:
+            return false
+        case .swiftCoreData:
+            return true
+        case .homepageSettings:
+            return true
         }
     }
 }
@@ -60,20 +75,33 @@ extension FeatureFlag: OverrideableFlag {
             return "Jetpack disconnect"
         case .debugMenu:
             return "Debug menu"
+<<<<<<< HEAD
         case .offlinePages:
             return "Offline Pages"
         case .postReblogging:
             return "Post Reblogging"
+=======
+>>>>>>> develop
         case .unifiedAuth:
             return "Unified Auth"
-        case .quickActions:
-            return "Quick Actions"
+        case .unifiedSiteAddress:
+            return "Unified Auth - Site Address"
+        case .unifiedGoogle:
+            return "Unified Auth - Google"
         case .meMove:
             return "Move the Me Scene to My Site"
         case .floatingCreateButton:
             return "Floating Create Button"
         case .newReaderNavigation:
             return "New Reader Navigation"
+        case .tenor:
+            return "Tenor GIF media source"
+        case .readerWebview:
+            return "Reader content displayed in a WebView"
+        case .swiftCoreData:
+            return "Migrate Core Data Stack to Swift"
+        case .homepageSettings:
+            return "Homepage Settings"
         }
     }
 
@@ -84,6 +112,8 @@ extension FeatureFlag: OverrideableFlag {
         case .floatingCreateButton:
             return false
         case .newReaderNavigation:
+            return false
+        case .swiftCoreData:
             return false
         default:
             return true

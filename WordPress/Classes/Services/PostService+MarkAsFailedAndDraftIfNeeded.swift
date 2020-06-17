@@ -17,5 +17,6 @@
         }
 
         post.remoteStatus = .failed
+        post.author = post.blog.account?.displayName
     }
 }

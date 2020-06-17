@@ -1,15 +1,9 @@
-New blocks! Welcome to the Latest Posts block, for highlighting your new stuff in posts and pages.
+As usual, there are lots of improvements in the block editor. The Bin icon you use to remove blocks is now in a menu reachable by tapping the ellipsis button in the block Toolbar. We also added support for overlay colours in the Cover block, support for radial gradients in Button and Cover blocks, enter/exit animation in the Floating Toolbar, and a tooltip for page template selection buttons. And now the block Toolbar collapses if the block is narrower than the Toolbar.
 
-When you create a new page, we’ll show you a few templates - pick one, and we’ll add all the necessary blocks to your page to get you started quickly.
+We also made lots of fixes, for a cleaner block editor experience.
+Media upload will display a “retry” message when there’s no connection (instead of freezing), undo/redo work is more reliable for both blocks and text, we corrected a merging issue with text blocks, and we corrected the button alignment in page templates.
 
-We fixed up a few block editor issues; no more crashes when pasting in HTML content or missing Quote block borders in Dark Mode.
+We've added a new setting that allows you to change your homepage and posts page from site settings.
 
-If you scheduled a post to publish in the past, it would display as “scheduled” instead of “published”. That’s fixed, along with an issue where dates displayed incorrectly if your site’s time zone wasn’t the same as your device’s time zone.
+Finally, we dealt with a Gravatar issue that got you stuck in the photo editing screen when you tried to take a new photo, and made some UI updates in the Reader.
 
-We fixed some UI inconsistencies in Dark Mode and with the Reader toolbar.
-
-You can use @-mentions when writing comments in fullscreen mode.
-
-Sometimes Signup and Login Magic Link emails would go to your spam folder, so we added a note to the confirmation screen suggesting that folks check their spam/junk folders if they don’t see the email promptly.
-
-Stay safe, everyone.

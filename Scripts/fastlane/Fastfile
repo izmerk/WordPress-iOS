@@ -15,19 +15,22 @@ def get_required_env(key)
   ENV[key]
 end
 
-before_all do
-  # Check that the env files exist
-  unless is_ci || File.file?(USER_ENV_FILE_PATH)
-    UI.user_error!("~/.wpios-env.default not found: Please copy env/user.env-example to #{USER_ENV_FILE_PATH} and fill in the values")
-  end
-  unless File.file?(PROJECT_ENV_FILE_PATH)
-    UI.user_error!("project.env not found: Make sure your configuration is up to date with `rake dependencies`")
-  end
+before_all do |lane|
+  # Skip these checks/steps for test lane (not needed for testing)
+  unless lane == :test_without_building
+    # Check that the env files exist
+    unless is_ci || File.file?(USER_ENV_FILE_PATH)
+      UI.user_error!("~/.wpios-env.default not found: Please copy env/user.env-example to #{USER_ENV_FILE_PATH} and fill in the values")
+    end
+    unless File.file?(PROJECT_ENV_FILE_PATH)
+      UI.user_error!("project.env not found: Make sure your configuration is up to date with `rake dependencies`")
+    end
 
-  # This allows code signing to work on CircleCI
-  # It is skipped if this isn't running on CI
-  # See https://circleci.com/docs/2.0/ios-codesigning/
-  setup_circle_ci
+    # This allows code signing to work on CircleCI
+    # It is skipped if this isn't running on CI
+    # See https://circleci.com/docs/2.0/ios-codesigning/
+    setup_circle_ci
+  end
 end
 
 platform :ios do
@@ -54,7 +57,7 @@ import "./ScreenshotFastfile"
   #####################################################################################
   # code_freeze
   # -----------------------------------------------------------------------------------
-  # This lane executes the steps planned on code freeze
+  # This lane executes the initial steps planned on code freeze
   # -----------------------------------------------------------------------------------
   # Usage:
   # bundle exec fastlane code_freeze [skip_confirm:<skip confirm>]
@@ -73,10 +76,28 @@ import "./ScreenshotFastfile"
     ios_update_release_notes(new_version: new_version)
     setbranchprotection(repository:GHHELPER_REPO, branch: "release/#{new_version}")
     setfrozentag(repository:GHHELPER_REPO, milestone: new_version)
+    get_prs_list(repository:GHHELPER_REPO, start_tag:"#{old_version}", report_path:"#{File.expand_path('~')}/wpios_prs_list_#{old_version}_#{new_version}.txt")
+    ios_check_beta_deps(podfile:"#{ENV["PROJECT_ROOT_FOLDER"]}Podfile")
+  end
 
+
+  #####################################################################################
+  # complete_code_freeze
+  # -----------------------------------------------------------------------------------
+  # This lane executes the initial steps planned on code freeze
+  # -----------------------------------------------------------------------------------
+  # Usage:
+  # bundle exec fastlane complete_code_freeze [skip_confirm:<skip confirm>]
+  #
+  # Example:
+  # bundle exec fastlane complete_code_freeze
+  # bundle exec fastlane complete_code_freeze skip_confirm:true
+  #####################################################################################
+  desc "Creates a new release branch from the current develop"
+  lane :complete_code_freeze do | options |
+    ios_completecodefreeze_prechecks(options)
     ios_localize_project()
     ios_tag_build()
-    get_prs_list(repository:GHHELPER_REPO, start_tag:"#{old_version}", report_path:"#{File.expand_path('~')}/wpios_prs_list_#{old_version}_#{new_version}.txt")
   end
 
   #####################################################################################
@@ -414,8 +435,60 @@ import "./ScreenshotFastfile"
     end
   end
 
+  #####################################################################################
+  # register_new_device
+  # -----------------------------------------------------------------------------------
+  # This lane helps a developer register a new device in the App Store Portal
+  # -----------------------------------------------------------------------------------
+  # Usage:
+  # bundle exec fastlane register_new_device
+  #
+  # Example:
+  # bundle exec fastlane register_new_device 
+  #####################################################################################
+  desc "Registers a Device in the developer console"
+  lane :register_new_device do | options |
+
+    bundle_identifiers = [
+      "org.wordpress",
+      "org.wordpress.WordPressShare",
+      "org.wordpress.WordPressDraftAction",
+      "org.wordpress.WordPressTodayWidget",
+      "org.wordpress.WordPressNotificationServiceExtension",
+      "org.wordpress.WordPressNotificationContentExtension",
+      "org.wordpress.WordPressAllTimeWidget",
+      "org.wordpress.WordPressThisWeekWidget"
+    ]
+
+    device_name = UI.input("Device Name: ") unless options[:device_name] != nil
+    device_id = UI.input("Device ID: ") unless options[:device_id] != nil
+    UI.message "Registering #{device_name} with ID #{device_id} and registering it with any provisioning profiles associated with these bundle identifiers:"
+    bundle_identifiers.each { |identifier|
+      puts "\t#{identifier}"
+    }
+
+    # Register the user's device
+    register_device(
+      name: device_name,
+      udid: device_id,
+      team_id: get_required_env("EXT_EXPORT_TEAM_ID")
+    )
+
+    # Add all development certificates to the provisioning profiles (just in case – this is an easy step to miss)
+    add_development_certificates_to_provisioning_profiles(
+      team_id: get_required_env("EXT_EXPORT_TEAM_ID"),
+      app_identifier: bundle_identifiers
+    )
+
+    # Add all devices to the provisioning profiles
+    add_all_devices_to_provisioning_profiles(
+      team_id: get_required_env("EXT_EXPORT_TEAM_ID"),
+      app_identifier: bundle_identifiers
+    )
+  end
+
 ########################################################################
-# Cnfigure Lanes
+# Configure Lanes
 ########################################################################
   #####################################################################################
   # update_certs_and_profiles
@@ -481,6 +554,35 @@ import "./ScreenshotFastfile"
                        "org.wordpress.WordPressNotificationContentExtension",
                        "org.wordpress.WordPressAllTimeWidget",
                        "org.wordpress.WordPressThisWeekWidget"])
+  end
+
+########################################################################
+# Test Lanes
+########################################################################
+  #####################################################################################
+  # test_without_building
+  # -----------------------------------------------------------------------------------
+  # This lane runs tests without building the app.
+  # It requires a prebuilt xctestrun file and simulator destination where the tests will be run.
+  # -----------------------------------------------------------------------------------
+  # Usage:
+  # bundle exec fastlane test_without_building [xctestrun:<Path to xctestrun file>] [destination:<Simulator>] [try_count:<Number of times to try tests>]
+  #
+  # Example:
+  # bundle exec fastlane test_without_building xctestrun:WordPress_WordPressUITests_iphonesimulator13.2-x86_64.xctestrun destination:"platform=iOS Simulator,id=$SIMULATOR_UDID" try_count:3
+  #####################################################################################
+  desc "Run tests without building"
+  lane :test_without_building do | options |
+    multi_scan(
+      workspace: "../WordPress.xcworkspace",
+      scheme: "WordPress",
+      test_without_building: true,
+      xctestrun: "../#{options[:xctestrun]}",
+      destination: options[:destination],
+      try_count: options[:try_count],
+      output_directory: "../build/results",
+      result_bundle: true
+    )
   end
 
 ########################################################################

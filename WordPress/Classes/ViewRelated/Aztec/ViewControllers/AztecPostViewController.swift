@@ -1859,6 +1859,7 @@ extension AztecPostViewController {
         picker.selectionActionTitle = Constants.mediaPickerInsertText
         picker.mediaPicker.options = options
         picker.delegate = self
+        picker.previewActionTitle = NSLocalizedString("Edit %@", comment: "Button that displays the media editor to the user")
         picker.modalPresentationStyle = .currentContext
         if let previousPicker = mediaPickerInputViewController?.mediaPicker {
             picker.mediaPicker.selectedAssets = previousPicker.selectedAssets
@@ -2391,10 +2392,10 @@ extension AztecPostViewController {
         attachment?.uploadID = media.uploadID
     }
 
-    /// Sets the badge title of `attachment` to "GIF" if either the media is being imported from Giphy,
+    /// Sets the badge title of `attachment` to "GIF" if either the media is being imported from Tenor,
     /// or if it's a PHAsset with an animated playback style.
     private func setGifBadgeIfNecessary(for attachment: MediaAttachment, asset: ExportableAsset, source: MediaSource) {
-        var isGif = (source == .giphy)
+        var isGif = source == .tenor
 
         if let asset = asset as? PHAsset,
             asset.playbackStyle == .imageAnimated {
@@ -2438,14 +2439,16 @@ extension AztecPostViewController {
         }
     }
 
-    private func insertImageAttachment(with url: URL = Constants.placeholderMediaLink) -> ImageAttachment {
+    private func insertImageAttachment(with url: URL = Constants.placeholderMediaLink, caption: String? = nil) -> ImageAttachment {
         let attachment = richTextView.replaceWithImage(at: self.richTextView.selectedRange, sourceURL: url, placeHolderImage: Assets.defaultMissingImage)
         attachment.size = .full
 
         if url.isGif {
             attachment.badgeTitle = Constants.mediaGIFBadgeTitle
         }
-
+        if let caption = caption {
+            richTextView.replaceCaption(for: attachment, with: NSAttributedString(string: caption))
+        }
         return attachment
     }
 
@@ -2519,7 +2522,7 @@ extension AztecPostViewController {
         }
         switch media.mediaType {
         case .image:
-            let attachment = insertImageAttachment(with: remoteURL)
+            let attachment = insertImageAttachment(with: remoteURL, caption: media.caption)
             attachment.alt = media.alt
             WPAppAnalytics.track(.editorAddedPhotoViaWPMediaLibrary, withProperties: WPAppAnalytics.properties(for: media, selectionMethod: mediaSelectionMethod), with: post)
         case .video:
@@ -2549,7 +2552,7 @@ extension AztecPostViewController {
         }
         var attachment: MediaAttachment?
         if media.mediaType == .image {
-            attachment = insertImageAttachment(with: tempMediaURL)
+            attachment = insertImageAttachment(with: tempMediaURL, caption: media.caption)
         } else if media.mediaType == .video,
             let remoteURLStr = media.remoteURL,
             let remoteURL = URL(string: remoteURLStr) {
@@ -3304,10 +3307,10 @@ extension AztecPostViewController: StockPhotosPickerDelegate {
     }
 }
 
-extension AztecPostViewController: GiphyPickerDelegate {
-    func giphyPicker(_ picker: GiphyPicker, didFinishPicking assets: [GiphyMedia]) {
+extension AztecPostViewController: TenorPickerDelegate {
+    func tenorPicker(_ picker: TenorPicker, didFinishPicking assets: [TenorMedia]) {
         assets.forEach {
-            insert(exportableAsset: $0, source: .giphy)
+            insert(exportableAsset: $0, source: .tenor)
         }
     }
 }
@@ -3519,9 +3522,9 @@ extension AztecPostViewController {
                               onFinishEditing: { [weak self] images, actions in
                                 images.forEach { mediaEditorImage in
                                     if let image = mediaEditorImage.editedImage {
-                                        self?.insertImage(image: image, source: .mediaEditor)
+                                        self?.insertImage(image: image)
                                     } else if let phAsset = mediaEditorImage as? PHAsset {
-                                        self?.insertDeviceMedia(phAsset: phAsset, source: .mediaEditor)
+                                        self?.insertDeviceMedia(phAsset: phAsset)
                                     }
                                 }
 
@@ -3543,6 +3546,36 @@ extension AztecPostViewController {
     }
 
     private func edit(_ imageAttachment: ImageAttachment) {
+
+        guard imageAttachment.mediaURL?.isGif == false else {
+            confirmEditingGIF(imageAttachment)
+            return
+        }
+
+        editAttachment(imageAttachment)
+    }
+
+    private func confirmEditingGIF(_ imageAttachment: ImageAttachment) {
+        let alertController = UIAlertController(title: GIFAlertStrings.title,
+                                                message: GIFAlertStrings.message,
+                                                preferredStyle: .alert)
+
+        alertController.addCancelActionWithTitle(GIFAlertStrings.cancel) { _ in
+            if imageAttachment == self.currentSelectedAttachment {
+                self.currentSelectedAttachment = nil
+                self.resetMediaAttachmentOverlay(imageAttachment)
+                self.richTextView.refresh(imageAttachment)
+            }
+        }
+
+        alertController.addActionWithTitle(GIFAlertStrings.edit, style: .destructive) { _ in
+            self.editAttachment(imageAttachment)
+        }
+
+        present(alertController, animated: true)
+    }
+
+    private func editAttachment(_ imageAttachment: ImageAttachment) {
         guard let image = imageAttachment.image else {
             return
         }
@@ -3551,13 +3584,13 @@ extension AztecPostViewController {
         mediaEditor.editingAlreadyPublishedImage = true
 
         mediaEditor.edit(from: self,
-                              onFinishEditing: { [weak self] images, actions in
-                                guard !actions.isEmpty, let image = images.first as? UIImage else {
-                                    // If the image wasn't edited, do nothing
-                                    return
-                                }
+                         onFinishEditing: { [weak self] images, actions in
+                            guard !actions.isEmpty, let image = images.first as? UIImage else {
+                                // If the image wasn't edited, do nothing
+                                return
+                            }
 
-                                self?.replace(attachment: imageAttachment, with: image, actions: actions)
+                            self?.replace(attachment: imageAttachment, with: image, actions: actions)
         })
     }
 
@@ -3573,4 +3606,5 @@ extension AztecPostViewController {
         }
         attachment.uploadID = media.uploadID
     }
+
 }
