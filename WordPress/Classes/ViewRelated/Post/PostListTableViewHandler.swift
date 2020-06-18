@@ -28,7 +28,7 @@ class PostListTableViewHandler: WPTableViewHandler {
             do {
                 try controller.performFetch()
             } catch {
-                DDLogError("Error fetching pages after refreshing the table: \(error)")
+                DDLogError("Error fetching posts after refreshing the table: \(error)")
             }
         }
 

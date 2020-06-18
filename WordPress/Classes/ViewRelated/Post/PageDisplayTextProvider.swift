@@ -31,7 +31,7 @@ class PageDisplayTextProvider: AbstractPostDisplayTextProvider {
 
     // MARK: - Offline: First Try
 
-    static let offlineDraftFailureFirstTry = NSLocalizedString("We'll save your draft when your device is back online.",
+    static let offlineDraftFailureFirstTry = NSLocalizedString("We'll save your draft when the device is back online.",
                                                                comment: "Text displayed in notice after the app fails to upload a draft.")
     static let offlinePrivateFailureFirstTry = NSLocalizedString("We'll publish your private page when your device is back online.",
                                                                  comment: "Text displayed in notice after the app fails to upload a private page.")
