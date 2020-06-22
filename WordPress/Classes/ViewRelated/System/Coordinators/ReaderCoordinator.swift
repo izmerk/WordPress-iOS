@@ -219,10 +219,6 @@ class ReaderCoordinator: NSObject {
             }
             failureBlock?()
         }
-        guard !FeatureFlag.newReaderNavigation.enabled else {
-            WPTabBarController.sharedInstance().navigateToReader(detailViewController)
-            return
-        }
 
         var detailViewController: UIViewController
         if FeatureFlag.readerWebview.enabled {

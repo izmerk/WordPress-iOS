@@ -630,17 +630,12 @@ static CGFloat const WPTabBarIconSize = 32.0f;
         }
         readerPostDetailVC = [ReaderDetailViewController controllerWithPostID:postId siteID:blogId isFeed:NO];
     }
-    ReaderDetailViewController *readerPostDetailVC = [ReaderDetailViewController controllerWithPostID:postId siteID:blogId isFeed:NO];
-
     if (topDetailVC && [Feature enabled:FeatureFlagNewReaderNavigation]) {
-        [self.readerNavigationController pushFullscreenViewController:readerPostDetailVC animated:YES];
+           [self.readerNavigationController pushFullscreenViewController:readerPostDetailVC animated:YES];
 
-    if (topDetailVC && [Feature enabled:FeatureFlagNewReaderNavigation]) {
-        [self.readerNavigationController pushFullscreenViewController:readerPostDetailVC animated:YES];
-
-    } else if (topDetailVC && topDetailVC.navigationController) {
-        [topDetailVC.navigationController pushFullscreenViewController:readerPostDetailVC animated:YES];
-    }
+       } else if (topDetailVC && topDetailVC.navigationController) {
+           [topDetailVC.navigationController pushFullscreenViewController:readerPostDetailVC animated:YES];
+       }
 }
 
 - (void)popNotificationsTabToRoot
