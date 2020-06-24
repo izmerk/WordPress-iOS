@@ -237,7 +237,7 @@ class PostNoticeViewModelTests: XCTestCase {
                 name: "Save draft while offline, first try",
                 page: createPage(.draft),
                 isInternetReachable: false,
-                expectedTitle: i18n("We'll save your draft when your device is back online."),
+                expectedTitle: i18n("We'll save your draft when the device is back online."),
                 expectedActionTitle: FailureActionTitles.retry
             ),
             Scenario(
