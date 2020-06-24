@@ -44,7 +44,7 @@ enum FeatureFlag: Int, CaseIterable {
         case .tenor:
             return true
         case .readerWebview:
-            return false
+            return true
         case .swiftCoreData:
             return BuildConfiguration.current == .localDeveloper
         case .homepageSettings:
