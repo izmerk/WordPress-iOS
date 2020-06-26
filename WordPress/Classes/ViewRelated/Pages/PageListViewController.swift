@@ -33,7 +33,7 @@ class PageListViewController: AbstractPostListViewController, UIViewControllerRe
         let tableViewHandler = PageListTableViewHandler(tableView: self.tableView, blog: self.blog)
         tableViewHandler.cacheRowHeights = false
         tableViewHandler.delegate = self
-        tableViewHandler.listensForContentChanges = false
+        tableViewHandler.listensForContentChanges = true
         tableViewHandler.updateRowAnimation = .none
         return tableViewHandler
     }()
@@ -346,7 +346,7 @@ class PageListViewController: AbstractPostListViewController, UIViewControllerRe
     }
 
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        guard _tableViewHandler.groupResults else {
+        guard _tableViewHandler.isSearching else {
             return 0.0
         }
         return Constant.Size.pageSectionHeaderHeight
@@ -357,7 +357,7 @@ class PageListViewController: AbstractPostListViewController, UIViewControllerRe
     }
 
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        guard _tableViewHandler.groupResults else {
+        guard _tableViewHandler.isSearching else {
             return UIView(frame: .zero)
         }
 

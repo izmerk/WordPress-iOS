@@ -155,8 +155,10 @@ class PageListTableViewCell: BasePageListCell {
         } else if page.hasPendingReviewState {
             badges.append(NSLocalizedString("Pending review", comment: "Title of the Pending Review Badge"))
         }
-
-        if page.hasLocalChanges() {
+        
+        if page.isFailed {
+            badges.append(PageDisplayTextProvider.offlineDraftFailureFirstTry)
+        } else if page.hasLocalChanges() {
             badges.append(NSLocalizedString("Local changes", comment: "Title of the Local Changes Badge"))
         }
 

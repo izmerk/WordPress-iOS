@@ -4,13 +4,13 @@ import Foundation
 final class PageListTableViewHandler: WPTableViewHandler {
     var isSearching: Bool = false
     var status: PostListFilter.Status = .published
-    var groupResults: Bool {
-        if isSearching {
-            return true
-        }
-
-        return status == .scheduled
-    }
+//    var groupResults: Bool {
+//        if isSearching {
+//            return true
+//        }
+//
+//        return status == .scheduled
+//    }
 
     private var pages: [Page] = []
     private let blog: Blog
@@ -47,7 +47,7 @@ final class PageListTableViewHandler: WPTableViewHandler {
             return searchResultsController
         }
 
-        return groupResults ? groupedResultsController : flatResultsController
+        return super.resultsController
     }
 
     override func refreshTableView() {
@@ -75,7 +75,7 @@ final class PageListTableViewHandler: WPTableViewHandler {
     // MARK: - Public methods
 
     func page(at indexPath: IndexPath) -> Page {
-        guard groupResults else {
+        guard isSearching else {
             return pages[indexPath.row]
         }
 
@@ -116,13 +116,13 @@ final class PageListTableViewHandler: WPTableViewHandler {
 
     // MARK: - Override TableView Datasource
 
-    override func numberOfSections(in tableView: UITableView) -> Int {
-        return groupResults ? super.numberOfSections(in: tableView) : 1
-    }
-
-    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return groupResults ? super.tableView(tableView, numberOfRowsInSection: section) : pages.count
-    }
+//    override func numberOfSections(in tableView: UITableView) -> Int {
+//        return isSearching ? super.numberOfSections(in: tableView) : 1
+//    }
+//
+//    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+//        return isSearching ? super.tableView(tableView, numberOfRowsInSection: section) : pages.count
+//    }
 
 
     // MARK: - Private methods
@@ -160,7 +160,7 @@ final class PageListTableViewHandler: WPTableViewHandler {
     }
 
     private func setupPages() -> [Page] {
-        guard !groupResults, let pages = resultsController.fetchedObjects as? [Page] else {
+        guard !isSearching, let pages = resultsController.fetchedObjects as? [Page] else {
             return []
         }
 
